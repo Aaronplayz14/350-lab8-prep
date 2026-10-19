@@ -1,0 +1,41 @@
+Rectangle and triangle vertices
+
+Since the screen measures 800 by 600, the rectangle's dimensions are 400 by 300, with the following corners:
+TL (200, 150), TR (600, 150), BR (600, 450), BL (200, 450).
+
+A counterclockwise winding on the screen is as follows because the y-axis points down:
+Top-left triangle:  TL, BL, TR  = (200,150), (200,450), (600,150)
+Bottom-right triangle: TR, BL, BR  = (600,150), (200,450), (600,450)
+
+Index buffer
+
+Each corner should be stored once and numbered 0 = TL, 1 = TR, 2 = BR, and 3 = BL.
+The index list then provides the same two triangles:
+0, 3, 1, 1, 3, 2
+
+Memory comparison
+
+Position only (2 floats = 8 bytes per vertex):
+- Non-indexed: 6 vertices * 8 = 48 bytes.
+- Indexed: 4 vertices * 8 = 32 bytes + 6 indices * 4 = 24 bytes = 56 bytes.
+Here indexing is 8 bytes worse.
+
+With positions and UVs (4 floats = 16 bytes per vertex):
+- Non-indexed: 6 * 16 = 96 bytes.
+- Indexed: 4 * 16 = 64 bytes + 24 bytes = 88 bytes.
+Now indexing saves 8 bytes.
+
+Therefore, indexing is beneficial when reusing a vertex (and its attributes) saves more than the index's cost, which occurs when vertices carry a lot of data or are shared by numerous triangles. 
+The index list may be more expensive than it saves when there are few shared vertices or very little data per vertex.
+
+The index size remains 4 bytes when doubles (8 bytes) are used in place of floats:
+- Position only: non-indexed 6 * 2 * 8 = 96 bytes; indexed 4 * 2 * 8 + 24 = 88 bytes (saves 8).
+- Position + UV: non-indexed 6 * 4 * 8 = 192 bytes; indexed 4 * 4 * 8 + 24 = 152 bytes (saves 40).
+
+Normalized UV coordinates
+
+The rectangle spans x = 200..600 and y = 150..450, with u increasing left to right and v top to bottom. For (500, 301):
+u = (500 - 200) / 400 = 0.75
+v = (301 - 150) / 300 = 151/300 = 0.5033...
+
+So the UV coordinate is about (0.75, 0.5033).

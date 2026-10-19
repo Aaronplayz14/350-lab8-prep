@@ -1,0 +1,4 @@
+With the y-axis pointing down, increasing theta rotates clockwise.
+Take the x-axis unit vector (1, 0). 
+The rotation matrix sends it to (cos theta, sin theta). For a small positive theta this is roughly (1, theta), so the vector tips downward on the screen, which is clockwise.
+With the y-axis pointing up, the same matrix rotates counterclockwise, since (cos theta, sin theta) now points up.

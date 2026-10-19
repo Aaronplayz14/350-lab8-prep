@@ -5,20 +5,43 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 
+#include <array>
+#include <cassert>
+#include <cstddef>
+
 class Sprite {  // could derive from sf::Drawable if you're willing to pay for a vptr, but not
                 // necessary.
 public:
-    Sprite(const sf::Texture& texture) {
-        // TODO
+    Sprite(const sf::Texture& texture): mTexture(&texture),
+          mVertexArray(sf::PrimitiveType::Triangles,DEFAULT_VERTICES.size()),
+          mMinPointTex{0.f, 0.f},
+          mMaxPointTex{static_cast<float>(texture.getSize().x), static_cast<float>(texture.getSize().y)},
+          mOrigin{0.f, 0.f},
+          mTransform{} {
+        recomputeVertexArray();
     }
 
     Sprite(const sf::Texture& texture, const sf::Vector2f& texMinPoint,
-           const sf::Vector2f& texMaxPoint) {
-        // TODO
+           const sf::Vector2f& texMaxPoint)
+        : mTexture(&texture),
+          mVertexArray(sf::PrimitiveType::Triangles, DEFAULT_VERTICES.size()),
+          mMinPointTex(texMinPoint),
+          mMaxPointTex(texMaxPoint),
+          mOrigin{0.f, 0.f},
+          mTransform{} {
+        assert(mMinPointTex.x <= mMaxPointTex.x);
+        assert(mMinPointTex.y <= mMaxPointTex.y);
+        assert(mMinPointTex.x >= 0.f && mMinPointTex.y >= 0.f);
+        assert(mMaxPointTex.x <= static_cast<float>(texture.getSize().x));
+        assert(mMaxPointTex.y <= static_cast<float>(texture.getSize().y));
+
+        recomputeVertexArray();
     }
 
     void draw(sf::RenderTarget& target, sf::RenderStates states) const {
-        // TODO
+        recomputeVertexArray();
+        states.texture = mTexture;
+        target.draw(mVertexArray, states);
     }
 
     sf::Vector2f& position() { return mTransform.translation; }
@@ -34,12 +57,25 @@ private:
     //     ranging from [0, 1] in both dimensions.
     //   - the next 3 correspond to the vertices of the bottom-right triangle. of the default
     //     rectangle.
-    static constexpr std::array<sf::Vector2f, 6> DEFAULT_VERTICES = {};  // TODO
+    static constexpr std::array<sf::Vector2f, 6 > DEFAULT_VERTICES = 
+        {{
+            {0.f, 0.f}, {0.f, 1.f}, {1.f, 0.f},
+            {1.f, 0.f}, {0.f, 1.f}, {1.f, 1.f}
+        }};
 
     // if mTexture is valid, recomputes the positions and coords of sf::Vertex for each
     // of 6 possible entries in mVertexArray.
     void recomputeVertexArray() const {
-        // TODO
+        assert(mTexture != nullptr);
+        const sf::Vector2f textureSize = mMaxPointTex - mMinPointTex;
+
+        for (std::size_t i = 0; i < DEFAULT_VERTICES.size(); ++i) {
+            const sf::Vector2f normalized = DEFAULT_VERTICES[i];
+            const sf::Vector2f texCoord = mMinPointTex + normalized * textureSize;
+            const sf::Vector2f localPosition = normalized * textureSize - mOrigin;
+            mVertexArray[i].position = mTransform.applyPoint(localPosition);
+            mVertexArray[i].texCoords = texCoord;
+        }
     }
 
     const sf::Texture* mTexture;
